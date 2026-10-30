@@ -23,8 +23,10 @@
     guidesInShow: false,
   });
 
+  HW.PROJECT_VERSION = 2;
+
   HW.defaultProject = function () {
-    return {
+    const p = {
       version: 1,
       settings: HW.defaultSettings(),
       // 移動領域・障害物はマッピング（現実の投影面）に紐づくため全シーン共通
@@ -125,12 +127,20 @@
         },
       ],
     };
+    // 背景（月・地面・木・建物など）はテーマのプリセットから配置可能なオブジェクトとして入れる
+    return HW.normalizeProject(p);
   };
 
   // 欠けたフィールドを補完（古いデータや手書き JSON 対策）
   HW.normalizeProject = function (p) {
     if (!p || !Array.isArray(p.scenes)) throw new Error('scenes がありません');
     p.settings = Object.assign(HW.defaultSettings(), p.settings || {});
+    // v1 → v2: テーマに焼き込まれていた背景をオブジェクトとして各シーンの最背面に追加
+    if (!p.version || p.version < 2) {
+      const LW = Math.round((HW.LOGICAL_H * p.settings.width) / p.settings.height);
+      p.scenes.forEach((s) => (s.items = HW.themePreset(s.theme, LW).concat(s.items || [])));
+      p.version = HW.PROJECT_VERSION;
+    }
     p.layout = p.layout || {};
     p.layout.zones = (p.layout.zones || []).map((z) => Object.assign({ id: uid(), name: '領域', kind: 'any', travel: true }, z));
     p.layout.obstacles = (p.layout.obstacles || []).map((o) => Object.assign({ id: uid(), name: '障害物' }, o));

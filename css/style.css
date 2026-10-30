@@ -74,3 +74,9 @@ body.fs:not(.show) #panel { position: fixed; top: 0; right: 0; bottom: 0; z-inde
 #editHint { position: fixed; left: 50%; top: 16px; transform: translateX(-50%); background: rgba(0,0,0,.75); color: #fff; padding: 8px 14px; border-radius: 8px; font-size: 13px; opacity: 0; pointer-events: none; transition: opacity .3s; z-index: 20; }
 #editHint.on { opacity: 1; }
 body.show #editHint { display: none; }
+
+#layerList { max-height: 240px; overflow-y: auto; }
+#layerList .layer { padding: 3px 6px; border-radius: 4px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#layerList .layer:hover { background: #221a2f; }
+#layerList .layer.cur { background: #3a2160; }
+#layerList .layer.bg { color: #8fb6ff; }

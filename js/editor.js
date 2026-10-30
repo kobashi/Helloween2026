@@ -16,7 +16,13 @@
     grid: false,
     snap: false,
     lockLayout: false,
+    lockBg: false,
   });
+
+  const defOf = (item) => (item.kind === 'char' ? HW.characters[item.type] : HW.props[item.type]);
+  const isBg = (item) => item.kind === 'prop' && !!(HW.props[item.type] || {}).bg;
+  const COLOR_KEYS = ['color', 'rim', 'fill', 'light', 'vine'];
+  const PARAM_LABEL = { text: 'テキスト', color: '色', rim: '輪郭の色', fill: '塗りの色', light: '明かりの色', vine: 'つるの色', wave: '起伏', shape: '形（番号）', count: '数' };
 
   // ================= 初期化 =================
   E.init = function () {
@@ -44,6 +50,10 @@
     $('chkGrid').onchange = (e) => (E.grid = e.target.checked);
     $('chkSnap').onchange = (e) => (E.snap = e.target.checked);
     $('chkLock').onchange = (e) => (E.lockLayout = e.target.checked);
+    $('chkBgLock').onchange = (e) => {
+      E.lockBg = e.target.checked;
+      if (E.lockBg && E.sel && E.sel.type === 'item' && isBg(E.sel.ref)) E.select(null);
+    };
 
     $('scAdd').onclick = () => {
       App.snapshot();
@@ -121,11 +131,12 @@
       pc.appendChild(b);
     }
     const pp = $('palProps');
+    const pb = $('palBg');
     for (const k in HW.props) {
       const b = document.createElement('button');
       b.textContent = HW.props[k].label;
       b.onclick = () => addItem('prop', k);
-      pp.appendChild(b);
+      (HW.props[k].bg ? pb : pp).appendChild(b);
     }
     document.querySelectorAll('[data-add]').forEach((b) => {
       b.onclick = () => {
@@ -150,10 +161,21 @@
         if (type === 'spider') y = z.y + def.h + 120;
       }
     }
+    if (def.bg) {
+      x = LW / 2;
+      y = def.stretch ? HW.LOGICAL_H : HW.LOGICAL_H * 0.75;
+    }
     const item = { id: uid(), kind, type, x: Math.round(x), y: Math.round(y), scale: 1, flip: false, sound: true };
     if (kind === 'char') item.speed = 1;
     if (def.params) item.params = deepCopy(def.params);
-    App.scene().items.push(item);
+    if (def.stretch) item.sx = Math.round((LW / def.w) * 1000) / 1000;
+    const items = App.scene().items;
+    if (def.bg) {
+      // 背景は背景オブジェクト群の一番手前（キャラや小物より奥）に入れる
+      let i = 0;
+      while (i < items.length && isBg(items[i])) i++;
+      items.splice(i, 0, item);
+    } else items.push(item);
     E.select({ type: 'item', ref: item });
     App.changed({ rebuild: true, all: true });
   }
@@ -185,7 +207,7 @@
     const ent = App.playing ? App.stage.entityById(item.id) : null;
     const x = ent ? ent.x : item.x;
     const y = ent ? ent.y : item.y;
-    const w = def.w * (item.scale || 1);
+    const w = def.w * (item.scale || 1) * (def.stretch ? item.sx || 1 : 1);
     const h = def.h * (item.scale || 1);
     return { x: x - w / 2, y: y - h, w, h };
   }
@@ -197,7 +219,11 @@
   }
 
   function handles(box, type) {
-    if (type === 'item') return [{ id: 'scale', x: box.x + box.w, y: box.y }];
+    if (type === 'item') {
+      const hs = [{ id: 'scale', x: box.x + box.w, y: box.y }];
+      if (E.sel && (defOf(E.sel.ref) || {}).stretch) hs.push({ id: 'sx', x: box.x + box.w, y: box.y + box.h / 2 });
+      return hs;
+    }
     return [
       { id: 'nw', x: box.x, y: box.y },
       { id: 'ne', x: box.x + box.w, y: box.y },
@@ -206,17 +232,35 @@
     ];
   }
 
-  function hitTest(p) {
+  // クリック位置にある候補（優先順）: キャラ・小物 → 障害物 → 領域（小さい順）→ 背景オブジェクト
+  function candidates(p) {
     const items = App.scene().items;
+    const out = [];
+    const bgs = [];
     for (let i = items.length - 1; i >= 0; i--) {
-      if (HW.util.inRect(p.x, p.y, itemBox(items[i]))) return { type: 'item', ref: items[i] };
+      if (!HW.util.inRect(p.x, p.y, itemBox(items[i]))) continue;
+      if (isBg(items[i])) {
+        if (!E.lockBg) bgs.push({ type: 'item', ref: items[i] });
+      } else out.push({ type: 'item', ref: items[i] });
     }
-    if (E.lockLayout || !E.guides) return null;
-    const L = App.project.layout;
-    for (let i = L.obstacles.length - 1; i >= 0; i--) if (HW.util.inRect(p.x, p.y, L.obstacles[i])) return { type: 'obstacle', ref: L.obstacles[i] };
-    // 小さい領域を優先
-    const zs = L.zones.filter((z) => HW.util.inRect(p.x, p.y, z)).sort((a, b) => a.w * a.h - b.w * b.h);
-    return zs.length ? { type: 'zone', ref: zs[0] } : null;
+    if (!E.lockLayout && E.guides) {
+      const L = App.project.layout;
+      for (let i = L.obstacles.length - 1; i >= 0; i--) if (HW.util.inRect(p.x, p.y, L.obstacles[i])) out.push({ type: 'obstacle', ref: L.obstacles[i] });
+      L.zones
+        .filter((z) => HW.util.inRect(p.x, p.y, z))
+        .sort((a, b) => a.w * a.h - b.w * b.h)
+        .forEach((z) => out.push({ type: 'zone', ref: z }));
+    }
+    return out.concat(bgs);
+  }
+
+  // 選択中のものがカーソル下にあればそれを掴む。Alt+クリックで下にあるものを順に選ぶ
+  function hitTest(p, cycle) {
+    const list = candidates(p);
+    if (!list.length) return null;
+    const k = E.sel ? list.findIndex((c) => c.ref === E.sel.ref) : -1;
+    if (cycle) return list[(k + 1) % list.length];
+    return k >= 0 ? list[k] : list[0];
   }
 
   function toLogical(ev) {
@@ -242,7 +286,7 @@
         }
       }
     }
-    const hit = hitTest(p);
+    const hit = hitTest(p, ev.altKey);
     E.select(hit);
     if (hit) {
       App.snapshot();
@@ -262,6 +306,10 @@
     if (d.mode === 'move') {
       r.x = snapV(o.x + dx);
       r.y = snapV(o.y + dy);
+    } else if (d.mode === 'sx') {
+      const d0 = Math.abs(d.start.x - o.x) || 1;
+      const d1 = Math.abs(p.x - o.x);
+      r.sx = Math.round(clamp((o.sx || 1) * (d1 / d0), 0.1, 10) * 1000) / 1000;
     } else if (d.mode === 'scale') {
       const d0 = Math.hypot(d.start.x - o.x, d.start.y - o.y) || 1;
       const d1 = Math.hypot(p.x - o.x, p.y - o.y);
@@ -463,7 +511,9 @@
     ctx.strokeStyle = 'rgba(255,255,255,0.25)';
     ctx.lineWidth = 1.5;
     for (const it of App.scene().items) {
+      if (isBg(it) && E.lockBg) continue;
       const b = itemBox(it);
+      ctx.strokeStyle = isBg(it) ? 'rgba(120,180,255,0.18)' : 'rgba(255,255,255,0.25)';
       ctx.strokeRect(b.x, b.y, b.w, b.h);
     }
     ctx.restore();
@@ -581,8 +631,46 @@
     box.appendChild(
       field('背景テーマ', s, 'theme', 'select', {
         options: Object.keys(HW.themes).map((k) => [k, HW.themes[k].label]),
+        refreshAll: true,
+        after: () => {
+          if (confirm('背景オブジェクト（月・地面・木・建物など）も、このテーマの初期配置に置き換えますか？\n［キャンセル］なら空の色だけ変わり、配置済みの背景はそのまま残ります。')) replaceBg(s);
+        },
       })
     );
+    box.appendChild(
+      el('div', { class: 'row' }, [
+        btn('背景をテーマの初期配置に戻す', () => {
+          if (!confirm('このシーンの背景オブジェクトを、テーマの初期配置に置き換えます。よろしいですか？')) return;
+          App.snapshot();
+          replaceBg(s);
+          App.changed({ rebuild: true, all: true });
+        }),
+      ])
+    );
+  }
+
+  function replaceBg(scene) {
+    const keep = scene.items.filter((it) => !isBg(it));
+    scene.items = HW.themePreset(scene.theme, App.LW()).concat(keep);
+    if (E.sel && E.sel.type === 'item' && !scene.items.includes(E.sel.ref)) E.sel = null;
+  }
+
+  // シーン内アイテム一覧（手前が上）。大きな背景も一覧から選べる
+  function renderLayers() {
+    const box = $('layerList');
+    box.innerHTML = '';
+    const items = App.scene().items;
+    for (let i = items.length - 1; i >= 0; i--) {
+      const it = items[i];
+      const def = defOf(it);
+      const bg = isBg(it);
+      const row = el('div', {
+        class: 'layer' + (E.sel && E.sel.ref === it ? ' cur' : '') + (bg ? ' bg' : ''),
+        text: (it.kind === 'char' ? '● ' : bg ? '▧ ' : '◆ ') + (def ? def.label : it.type) + (it.params && it.params.text ? `「${it.params.text}」` : ''),
+      });
+      row.onclick = () => E.select({ type: 'item', ref: it });
+      box.appendChild(row);
+    }
   }
 
   function renderProjectProps() {
@@ -629,20 +717,25 @@
     const syncItem = () => App.stage.resetEntity(r);
     if (s.type === 'item') {
       const def = r.kind === 'char' ? HW.characters[r.type] : HW.props[r.type];
-      box.appendChild(el('div', { class: 'title', text: (r.kind === 'char' ? 'キャラ: ' : 'オブジェクト: ') + (def ? def.label : r.type) }));
+      box.appendChild(el('div', { class: 'title', text: (r.kind === 'char' ? 'キャラ: ' : isBg(r) ? '背景: ' : 'オブジェクト: ') + (def ? def.label : r.type) }));
       if (r.kind === 'char')
         box.appendChild(el('div', { class: 'muted', text: def.cat === 'air' ? '空中キャラ：共通/空中領域を移動' : '地上キャラ：共通/地上領域を移動（重力あり）' }));
       box.appendChild(field('X', r, 'x', 'number', { rebuild: false, after: syncItem }));
       box.appendChild(field('Y（足元）', r, 'y', 'number', { rebuild: false, after: syncItem }));
       box.appendChild(field('サイズ倍率', r, 'scale', 'number', { step: 0.05, min: 0.1, rebuild: false, after: syncItem }));
+      if (def && def.stretch) {
+        if (!r.sx) r.sx = 1;
+        box.appendChild(field('横幅倍率', r, 'sx', 'number', { step: 0.05, min: 0.1, rebuild: false, after: syncItem }));
+      }
       box.appendChild(field('左右反転', r, 'flip', 'check', { rebuild: false, after: syncItem }));
       if (r.kind === 'char') box.appendChild(field('速さ倍率', r, 'speed', 'number', { step: 0.1, min: 0.1, rebuild: false, after: syncItem }));
       box.appendChild(field('SE', r, 'sound', 'check', { rebuild: false, after: syncItem }));
       if (def && def.params) {
         r.params = r.params || deepCopy(def.params);
         for (const k in def.params) {
-          const isColor = k === 'color';
-          box.appendChild(field(isColor ? '色' : 'テキスト', r.params, k, isColor ? 'color' : 'text', { rebuild: false, after: syncItem }));
+          if (r.params[k] === undefined) r.params[k] = def.params[k];
+          const type = COLOR_KEYS.includes(k) ? 'color' : typeof def.params[k] === 'number' ? 'number' : 'text';
+          box.appendChild(field(PARAM_LABEL[k] || k, r.params, k, type, { rebuild: false, step: k === 'shape' ? 1 : undefined, after: syncItem }));
         }
       }
       box.appendChild(
@@ -710,6 +803,7 @@
     }
     if (opts.keepForm) updateSelValues();
     else renderSelProps();
+    renderLayers();
   };
 
   // 時間表示

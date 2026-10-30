@@ -212,9 +212,13 @@
 
   defs.tree = {
     label: '枯れ木',
+    bg: true,
     w: 280,
     h: 400,
+    params: { fill: '#140820', rim: '#a24bff', shape: 1 },
     draw(ctx, p, t) {
+      const P = p.params || {};
+      const shape = Number(P.shape) || 1;
       const sway = Math.sin(t * 0.7 + p.seed * 5) * 0.03;
       const branch = (len, ang, wd, depth) => {
         ctx.save();
@@ -225,12 +229,12 @@
         ctx.lineTo(wd * 0.1, -len);
         ctx.quadraticCurveTo(wd * 0.3, -len * 0.5, wd / 2, 0);
         ctx.closePath();
-        ctx.fillStyle = '#140820';
+        ctx.fillStyle = P.fill || '#140820';
         ctx.fill();
-        HW.outline(ctx, C.purple, 2.5);
+        HW.outline(ctx, P.rim || C.purple, 2.5);
         if (depth > 0) {
           ctx.translate(0, -len);
-          const k = HW.util.hash(depth * 13 + p.seed * 100 + len);
+          const k = HW.util.hash(depth * 13 + shape * 100 + len);
           branch(len * 0.68, -0.5 - k * 0.3, wd * 0.6, depth - 1);
           branch(len * 0.6, 0.45 + k * 0.35, wd * 0.55, depth - 1);
         }
@@ -304,7 +308,8 @@
   };
 
   defs.moon = {
-    label: '満月',
+    label: '月',
+    bg: true,
     w: 280,
     h: 280,
     params: { color: '#fff6c8' },
@@ -389,6 +394,226 @@
       band(-28, -54, C.orange);
       band(-54, -90, C.white);
       HW.noGlow(ctx);
+    },
+  };
+
+  // ===================== 背景オブジェクト =====================
+  //  stretch: true のものは「横幅」(sx) を伸縮しても絵が歪まず、横に描き足される
+  const P = (p) => p.params || {};
+
+  defs.hills = {
+    label: '地面・丘',
+    bg: true,
+    stretch: true,
+    w: 1920,
+    h: 300,
+    params: { fill: '#0b0418', rim: '#a24bff', wave: 40, shape: 1 },
+    draw(ctx, p) {
+      const W = this.w * (p.sx || 1);
+      const amp = Number(P(p).wave) || 0;
+      const sd = Number(P(p).shape) || 1;
+      ctx.beginPath();
+      ctx.moveTo(-W / 2, 0);
+      for (let x = 0; x <= W + 1; x += 30) {
+        const y = -(this.h - amp) - Math.sin(x / 300 + sd) * amp - Math.sin(x / 120 + sd * 2) * amp * 0.25;
+        ctx.lineTo(-W / 2 + x, y);
+      }
+      ctx.lineTo(W / 2, 0);
+      ctx.closePath();
+      ctx.fillStyle = P(p).fill || '#0b0418';
+      ctx.fill();
+      if (P(p).rim && P(p).rim !== '#000000') {
+        ctx.beginPath();
+        for (let x = 0; x <= W + 1; x += 30) {
+          const y = -(this.h - amp) - Math.sin(x / 300 + sd) * amp - Math.sin(x / 120 + sd * 2) * amp * 0.25;
+          if (x === 0) ctx.moveTo(-W / 2 + x, y);
+          else ctx.lineTo(-W / 2 + x, y);
+        }
+        HW.outline(ctx, P(p).rim, 3);
+      }
+    },
+  };
+
+  defs.graves = {
+    label: '墓地（シルエット列）',
+    bg: true,
+    stretch: true,
+    w: 1920,
+    h: 160,
+    params: { fill: '#14082a', rim: '#9a7dff', count: 9 },
+    draw(ctx, p) {
+      const W = this.w * (p.sx || 1);
+      const n = Math.max(1, Math.round((Number(P(p).count) || 9) * (p.sx || 1)));
+      const hs = HW.util.hash;
+      for (let i = 0; i < n; i++) {
+        const x = -W / 2 + (i + 0.5) * (W / n) + (hs(i + 2) - 0.5) * 60;
+        const h = 60 + hs(i * 2 + 2) * 60;
+        const w = 40 + hs(i * 3 + 2) * 30;
+        const y = -hs(i * 5 + 2) * 30;
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate((hs(i * 7 + 2) - 0.5) * 0.25);
+        ctx.beginPath();
+        if (hs(i * 11 + 2) > 0.7) {
+          ctx.rect(-6, -h, 12, h);
+          ctx.rect(-w / 2, -h * 0.75, w, 12);
+        } else {
+          ctx.moveTo(-w / 2, 0);
+          ctx.lineTo(-w / 2, -h + w / 2);
+          ctx.arc(0, -h + w / 2, w / 2, Math.PI, 0);
+          ctx.lineTo(w / 2, 0);
+          ctx.closePath();
+        }
+        ctx.fillStyle = P(p).fill || '#14082a';
+        ctx.fill();
+        HW.outline(ctx, P(p).rim || '#9a7dff', 2);
+        ctx.restore();
+      }
+    },
+  };
+
+  const MANSION_WINDOWS = (() => {
+    const w = [];
+    const add = (x, y, ww, hh) => w.push({ x, y, w: ww, h: hh });
+    for (let i = 0; i < 3; i++) add(-270 + i * 50, -180, 28, 44);
+    for (let i = 0; i < 3; i++) add(-90 + i * 70, -300, 34, 54);
+    for (let i = 0; i < 3; i++) add(-90 + i * 70, -180, 34, 54);
+    add(-18, -420, 36, 46);
+    add(220, -380, 30, 50);
+    add(220, -280, 30, 50);
+    for (let i = 0; i < 2; i++) add(140 + i * 60, -140, 30, 46);
+    return w;
+  })();
+
+  defs.mansion = {
+    label: '幽霊屋敷',
+    bg: true,
+    w: 700,
+    h: 560,
+    params: { fill: '#070012', rim: '#ff2bd6', light: '#ffb020' },
+    draw(ctx, p, t) {
+      const pr = P(p);
+      ctx.beginPath();
+      const pts = [
+        [-300, 0], [-300, -220], [-340, -220], [-250, -330], [-160, -220], [-120, -220], [-120, -340], [-150, -340],
+        [0, -500], [150, -340], [120, -340], [120, -260], [200, -260], [200, -420], [180, -420], [240, -540],
+        [300, -420], [280, -420], [280, -180], [320, -180], [320, 0],
+      ];
+      pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
+      ctx.closePath();
+      ctx.fillStyle = pr.fill || '#070012';
+      ctx.fill();
+      HW.outline(ctx, pr.rim || C.magenta, 3);
+      // 窓（ちらつき・時々消灯）
+      const light = pr.light || '#ffb020';
+      MANSION_WINDOWS.forEach((w, i) => {
+        const ph = HW.util.hash(i * 3.7 + p.seed * 10) * 10;
+        if (Math.sin(t * 0.13 + ph * 2) < -0.75) return;
+        const f = 0.7 + 0.3 * Math.sin(t * 13 + ph) * Math.sin(t * 3.1 + ph);
+        ctx.save();
+        ctx.globalAlpha = 0.75 + 0.25 * f;
+        HW.glow(ctx, light, 25);
+        ctx.fillStyle = light;
+        ctx.beginPath();
+        ctx.moveTo(w.x, w.y + w.h);
+        ctx.lineTo(w.x, w.y + w.w / 2);
+        ctx.arc(w.x + w.w / 2, w.y + w.w / 2, w.w / 2, Math.PI, 0);
+        ctx.lineTo(w.x + w.w, w.y + w.h);
+        ctx.fill();
+        ctx.restore();
+        ctx.fillStyle = pr.fill || '#070012';
+        ctx.fillRect(w.x + w.w / 2 - 2, w.y + 4, 4, w.h - 4);
+        ctx.fillRect(w.x, w.y + w.h * 0.55, w.w, 4);
+      });
+    },
+  };
+
+  defs.castle = {
+    label: '城壁（シルエット列）',
+    bg: true,
+    stretch: true,
+    w: 1920,
+    h: 510,
+    params: { fill: '#000000', rim: '#ff1744' },
+    draw(ctx, p) {
+      const W = this.w * (p.sx || 1);
+      const hs = HW.util.hash;
+      ctx.beginPath();
+      ctx.moveTo(-W / 2, 0);
+      ctx.lineTo(-W / 2, -238);
+      for (let x = 0; x < W; x += 80) {
+        const tall = hs(x + 0.5) > 0.75;
+        const top = tall ? -432 : -238;
+        const X = -W / 2 + x;
+        const xe = Math.min(W, x + 80) - x;
+        ctx.lineTo(X, top);
+        if (tall) {
+          ctx.lineTo(X + xe / 2, top - 70);
+          ctx.lineTo(X + xe, top);
+          ctx.lineTo(X + xe, -238);
+        } else {
+          ctx.lineTo(X + 20, top);
+          ctx.lineTo(X + 20, top - 20);
+          ctx.lineTo(X + 40, top - 20);
+          ctx.lineTo(X + 40, top);
+          ctx.lineTo(X + xe, top);
+        }
+      }
+      ctx.lineTo(W / 2, 0);
+      ctx.closePath();
+      ctx.fillStyle = P(p).fill || '#000';
+      ctx.fill();
+      HW.outline(ctx, P(p).rim || C.red, 3);
+    },
+  };
+
+  defs.pumpkinfield = {
+    label: 'かぼちゃ畑（列）',
+    bg: true,
+    stretch: true,
+    w: 1920,
+    h: 130,
+    params: { vine: '#1fd13a', count: 16 },
+    draw(ctx, p, t) {
+      const W = this.w * (p.sx || 1);
+      const hs = HW.util.hash;
+      ctx.strokeStyle = P(p).vine || '#1fd13a';
+      ctx.lineWidth = 3;
+      const nv = Math.round(14 * (p.sx || 1));
+      for (let i = 0; i < nv; i++) {
+        const x = -W / 2 + hs(i * 4.4) * W;
+        const y = -hs(i * 2.2) * 60;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        for (let k = 1; k <= 6; k++) ctx.quadraticCurveTo(x + k * 30 - 15, y - 20 * (k % 2 ? 1 : -1), x + k * 30, y);
+        ctx.stroke();
+      }
+      const n = Math.max(1, Math.round((Number(P(p).count) || 16) * (p.sx || 1)));
+      const list = [];
+      for (let i = 0; i < n; i++) list.push({ x: -W / 2 + hs(i * 5.1) * W, y: -40 - hs(i * 3.3) * 70, r: 9 + hs(i * 1.7) * 11, ph: hs(i) * 10 });
+      list.sort((a, b) => a.y - b.y);
+      for (const q of list) {
+        const f = 0.7 + 0.3 * Math.sin(t * 9 + q.ph);
+        HW.glow(ctx, C.orange, 18);
+        ctx.fillStyle = C.orange;
+        ctx.beginPath();
+        ctx.ellipse(q.x, q.y, q.r * 1.25, q.r, 0, 0, Math.PI * 2);
+        ctx.fill();
+        HW.noGlow(ctx);
+        ctx.fillStyle = `rgba(255,230,80,${f})`;
+        ctx.beginPath();
+        ctx.moveTo(q.x - q.r * 0.6, q.y - q.r * 0.1);
+        ctx.lineTo(q.x - q.r * 0.3, q.y - q.r * 0.55);
+        ctx.lineTo(q.x - q.r * 0.05, q.y - q.r * 0.1);
+        ctx.moveTo(q.x + q.r * 0.05, q.y - q.r * 0.1);
+        ctx.lineTo(q.x + q.r * 0.3, q.y - q.r * 0.55);
+        ctx.lineTo(q.x + q.r * 0.6, q.y - q.r * 0.1);
+        ctx.moveTo(q.x - q.r * 0.7, q.y + q.r * 0.2);
+        ctx.quadraticCurveTo(q.x, q.y + q.r * 0.9, q.x + q.r * 0.7, q.y + q.r * 0.2);
+        ctx.fill();
+        ctx.fillStyle = '#3cff4a';
+        ctx.fillRect(q.x - 3, q.y - q.r - 8, 6, 10);
+      }
     },
   };
 

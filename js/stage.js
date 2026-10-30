@@ -104,13 +104,16 @@
         x: item.x,
         y: item.y,
         scale: sc,
-        dw: def.w * sc,
+        sx: def.stretch ? item.sx || 1 : 1,
+        dw: def.w * sc * (def.stretch ? item.sx || 1 : 1),
         dh: def.h * sc,
+        bg: !!def.bg,
         facing: item.flip ? -1 : 1,
         visFacing: item.flip ? -1 : 1,
         params: item.params || {},
         sound: item.sound !== false,
-        seed: HW.util.hash(item.x * 0.37 + item.y * 0.11),
+        // 位置を動かしても形が変わらないよう、ID から決める
+        seed: HW.util.hash([...String(item.id)].reduce((a, c) => a + c.charCodeAt(0) * 7.13, 0)),
         t: rand(0, 10),
       };
     }
@@ -220,7 +223,14 @@
       this._background(ctx);
       ctx.setTransform(s, 0, 0, s, 0, 0);
       this.theme.draw(ctx, this.LW, this.LH, this.time, this.themeState);
+      // 背景オブジェクト → テーマの前景効果（霧・稲光）→ その他、の順に描く
+      let frontDone = false;
+      const front = () => {
+        frontDone = true;
+        if (this.theme.drawFront) this.theme.drawFront(ctx, this.LW, this.LH, this.time, this.themeState);
+      };
       for (const d of this.drawList) {
+        if (!frontDone && !d.bg) front();
         if (d.def.drawWorld) d.def.drawWorld(ctx, d);
         ctx.save();
         ctx.translate(d.x, d.y);
@@ -230,6 +240,7 @@
         d.def.draw(ctx, d, d.t);
         ctx.restore();
       }
+      if (!frontDone) front();
       ctx.save();
       ctx.globalCompositeOperation = 'lighter';
       for (const p of this.particles) {

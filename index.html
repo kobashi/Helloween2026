@@ -16,6 +16,7 @@
     <span id="timeInfo"></span>
     <label><input type="checkbox" id="chkGuides" checked> 領域表示</label>
     <label><input type="checkbox" id="chkLock"> 領域ロック</label>
+    <label><input type="checkbox" id="chkBgLock"> 背景ロック</label>
     <label><input type="checkbox" id="chkGrid"> グリッド</label>
     <label><input type="checkbox" id="chkSnap"> スナップ</label>
     <span class="sp"></span>
@@ -52,6 +53,8 @@
         <h3>追加</h3>
         <div class="sub">キャラクター（FSM で動く）</div>
         <div id="palChars" class="pal"></div>
+        <div class="sub">背景オブジェクト（建物・月・木・地面など）</div>
+        <div id="palBg" class="pal"></div>
         <div class="sub">オブジェクト（静止・アニメ）</div>
         <div id="palProps" class="pal"></div>
         <div class="sub">マッピング用（全シーン共通・ショーでは非表示）</div>
@@ -69,6 +72,11 @@
       </section>
 
       <section>
+        <h3>レイヤー（上が手前）</h3>
+        <div id="layerList"></div>
+      </section>
+
+      <section>
         <h3>プロジェクト設定</h3>
         <div id="projProps"></div>
       </section>
@@ -76,7 +84,8 @@
       <section>
         <h3>操作</h3>
         <ul class="help">
-          <li>ドラッグ: 移動 ／ 黄色ハンドル: サイズ変更（ホイールでも可）</li>
+          <li>ドラッグ: 移動 ／ 黄色ハンドル: 右上=サイズ、右中央=横幅（地面・列の背景）。ホイールでもサイズ変更</li>
+          <li>Alt+クリック: 重なった下のもの（領域・背景など）を順に選択。レイヤー一覧からも選べます</li>
           <li>Delete: 削除 ／ Ctrl+D: 複製 ／ F: 反転 ／ 矢印: 微調整（Shift で10px）</li>
           <li>Space: プレビュー再生/停止 ／ Ctrl+Z: 元に戻す</li>
           <li>Shift+F: 編集モードのまま全画面 ／ Tab: 編集UIの表示/非表示（投影と同じ表示で配置合わせ）</li>
