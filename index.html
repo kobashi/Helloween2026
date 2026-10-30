@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Halloween Projection 2026</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Creepster&display=swap">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header id="toolbar">
+    <span class="brand">🎃 Halloween Projection</span>
+    <button id="btnPlay" title="Space / キャンバスをダブルクリック">▶ プレビュー</button>
+    <button id="btnReset" title="シーンを初期配置から再スタート">⟲ リセット</button>
+    <span id="timeInfo"></span>
+    <label><input type="checkbox" id="chkGuides" checked> 領域表示</label>
+    <label><input type="checkbox" id="chkLock"> 領域ロック</label>
+    <label><input type="checkbox" id="chkGrid"> グリッド</label>
+    <label><input type="checkbox" id="chkSnap"> スナップ</label>
+    <span class="sp"></span>
+    <button id="btnUndo" title="Ctrl+Z">↶ 元に戻す</button>
+    <button id="btnExport">書き出し</button>
+    <button id="btnImport">読み込み</button>
+    <input type="file" id="fileImport" accept=".json,application/json" hidden>
+    <button id="btnNew" class="danger">初期化</button>
+    <button id="btnShowHere" title="選択中のシーンからショーを開始">このシーンから ▶</button>
+    <button id="btnShow" class="primary">ショー開始 ⛶</button>
+  </header>
+
+  <div id="main">
+    <div id="stageWrap"><canvas id="stage"></canvas></div>
+
+    <aside id="panel">
+      <section>
+        <h3>シーン</h3>
+        <div id="sceneList"></div>
+        <div class="row">
+          <button id="scAdd">＋ 追加</button>
+          <button id="scDup">複製</button>
+          <button id="scUp">↑</button>
+          <button id="scDown">↓</button>
+          <button id="scDel" class="danger">削除</button>
+        </div>
+        <div id="showTotal" class="muted"></div>
+        <div id="sceneProps"></div>
+      </section>
+
+      <section>
+        <h3>追加</h3>
+        <div class="sub">キャラクター（FSM で動く）</div>
+        <div id="palChars" class="pal"></div>
+        <div class="sub">オブジェクト（静止・アニメ）</div>
+        <div id="palProps" class="pal"></div>
+        <div class="sub">マッピング用（全シーン共通・ショーでは非表示）</div>
+        <div class="pal">
+          <button data-add="zone:any" class="z-any">領域（共通）</button>
+          <button data-add="zone:ground" class="z-ground">地上領域</button>
+          <button data-add="zone:air" class="z-air">空中領域</button>
+          <button data-add="obstacle" class="z-obs">障害物ボックス</button>
+        </div>
+      </section>
+
+      <section>
+        <h3>選択中</h3>
+        <div id="selProps"></div>
+      </section>
+
+      <section>
+        <h3>プロジェクト設定</h3>
+        <div id="projProps"></div>
+      </section>
+
+      <section>
+        <h3>操作</h3>
+        <ul class="help">
+          <li>ドラッグ: 移動 ／ 黄色ハンドル: サイズ変更（ホイールでも可）</li>
+          <li>Delete: 削除 ／ Ctrl+D: 複製 ／ F: 反転 ／ 矢印: 微調整（Shift で10px）</li>
+          <li>Space: プレビュー再生/停止 ／ Ctrl+Z: 元に戻す</li>
+          <li>ショー中: Esc/E 編集へ ／ ←→ シーン送り ／ Space 一時停止 ／ G 領域表示 ／ F 全画面 ／ M 消音</li>
+          <li>編集内容はブラウザに自動保存されます。本番 PC へは「書き出し」した JSON を「読み込み」で移せます。</li>
+        </ul>
+      </section>
+    </aside>
+  </div>
+
+  <div id="showHint">Esc / E: 編集に戻る　←→: シーン送り　Space: 一時停止　G: 領域表示　F: 全画面　M: 消音</div>
+
+  <script src="js/util.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/physics.js"></script>
+  <script src="js/fsm.js"></script>
+  <script src="js/characters.js"></script>
+  <script src="js/props.js"></script>
+  <script src="js/themes.js"></script>
+  <script src="js/stage.js"></script>
+  <script src="js/project.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/editor.js"></script>
+</body>
+</html>

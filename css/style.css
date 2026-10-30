@@ -1,0 +1,65 @@
+:root {
+  --bg: #0d0a14;
+  --panel: #17121f;
+  --line: #2e2540;
+  --text: #ece6f5;
+  --muted: #9a90ad;
+  --accent: #ff7a00;
+  --accent2: #a24bff;
+  --danger: #ff3b5c;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font: 13px/1.4 system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", sans-serif; overflow: hidden; }
+button { background: #241c33; color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 5px 9px; font: inherit; cursor: pointer; }
+button:hover { border-color: var(--accent2); }
+button.primary { background: var(--accent); color: #000; font-weight: 700; border-color: var(--accent); }
+button.on { background: var(--accent2); border-color: var(--accent2); }
+button.danger { color: var(--danger); }
+input, select { background: #0f0b16; color: var(--text); border: 1px solid var(--line); border-radius: 4px; padding: 3px 5px; font: inherit; }
+input[type="checkbox"] { accent-color: var(--accent); }
+
+#toolbar { height: 46px; display: flex; align-items: center; gap: 8px; padding: 0 10px; border-bottom: 1px solid var(--line); background: var(--panel); white-space: nowrap; overflow-x: auto; }
+#toolbar .brand { font-weight: 800; color: var(--accent); margin-right: 6px; }
+#toolbar label { display: inline-flex; align-items: center; gap: 3px; color: var(--muted); }
+#toolbar .sp { flex: 1; }
+#timeInfo { font-variant-numeric: tabular-nums; color: var(--accent); min-width: 80px; }
+
+#main { display: flex; height: calc(100% - 46px); }
+#stageWrap { flex: 1; display: flex; align-items: center; justify-content: center; background: #050308; min-width: 0; padding: 10px; }
+#stage { background: #000; display: block; box-shadow: 0 0 0 1px #333; touch-action: none; }
+#panel { width: 340px; flex: none; overflow-y: auto; background: var(--panel); border-left: 1px solid var(--line); padding: 0 12px 30px; }
+#panel section { border-bottom: 1px solid var(--line); padding: 10px 0; }
+#panel h3 { margin: 0 0 8px; font-size: 13px; letter-spacing: .05em; color: var(--accent); }
+.sub { color: var(--muted); margin: 8px 0 4px; font-size: 12px; }
+.muted { color: var(--muted); font-size: 12px; margin: 4px 0; }
+.title { font-weight: 700; margin-bottom: 4px; }
+.row { display: flex; flex-wrap: wrap; gap: 5px; margin: 6px 0; }
+.pal { display: flex; flex-wrap: wrap; gap: 5px; }
+.pal button { font-size: 12px; }
+.z-any { border-color: #3cff6a !important; }
+.z-ground { border-color: #ffae00 !important; }
+.z-air { border-color: #3df2ff !important; }
+.z-obs { border-color: #ff1744 !important; }
+label.f { display: grid; grid-template-columns: 120px 1fr auto; align-items: center; gap: 6px; margin: 4px 0; }
+label.f > span:first-child { color: var(--muted); }
+label.f input[type="text"], label.f input[type="number"], label.f select { width: 100%; }
+label.f input[type="checkbox"] { justify-self: start; }
+label.f .val { min-width: 30px; text-align: right; color: var(--muted); }
+#sceneList .scene { display: flex; align-items: center; gap: 6px; padding: 5px 6px; border-radius: 5px; cursor: pointer; }
+#sceneList .scene:hover { background: #221a2f; }
+#sceneList .scene.cur { background: #3a2160; }
+#sceneList .scene.off .nm { color: var(--muted); text-decoration: line-through; }
+#sceneList .nm { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#sceneList .du { color: var(--muted); font-variant-numeric: tabular-nums; }
+.help { margin: 0; padding-left: 16px; color: var(--muted); font-size: 12px; }
+.help li { margin: 3px 0; }
+
+/* ---- ショーモード ---- */
+body.show #toolbar, body.show #panel { display: none; }
+body.show #main { height: 100%; }
+body.show #stageWrap { padding: 0; background: #000; }
+body.show #stage { box-shadow: none; }
+body.hidecursor, body.hidecursor * { cursor: none !important; }
+#showHint { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); background: rgba(0,0,0,.75); color: #fff; padding: 8px 14px; border-radius: 8px; font-size: 13px; opacity: 0; pointer-events: none; transition: opacity .3s; display: none; }
+body.show #showHint { display: block; }
+#showHint.on { opacity: 1; }
