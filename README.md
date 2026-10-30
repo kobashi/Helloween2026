@@ -20,6 +20,18 @@ python3 -m http.server 8000
 > ブラウザの自動再生制限のため、音はページを一度クリックするかキーを押してから鳴ります。
 > 無人運用する場合は、Chrome を `--kiosk --autoplay-policy=no-user-gesture-required` 付きで起動してください。
 
+## GitHub Pages で公開
+
+公開 URL: https://kobashi.github.io/Helloween2026/
+（ショーモードで直接開く場合は https://kobashi.github.io/Helloween2026/?show ）
+
+`.github/workflows/pages.yml` が push のたびにサイトをデプロイします。
+最初の 1 回だけ、リポジトリの **Settings → Pages → Build and deployment → Source** を **GitHub Actions** にしてください。
+設定後、Actions タブの「Deploy to GitHub Pages」を手動で実行（Run workflow）するか、もう一度 push すると公開されます。
+
+- 編集内容は、開いているブラウザ（オリジン）ごとに localStorage へ保存されます。ローカルで編集した内容を Pages 版で使うときは、JSON を書き出して読み込んでください。
+- 会場がオフラインなら、Pages ではなくローカルの `index.html` を使ってください。ネットがない場合、看板のフォント（Google Fonts）だけが代替フォントになります。
+
 ## モード
 
 ### 編集モード
