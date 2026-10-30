@@ -9,7 +9,8 @@
   --danger: #ff3b5c;
 }
 * { box-sizing: border-box; }
-html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font: 13px/1.4 system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", sans-serif; overflow: hidden; }
+html, body { margin: 0; height: 100%; }
+body { display: flex; flex-direction: column; background: var(--bg); color: var(--text); font: 13px/1.4 system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", sans-serif; overflow: hidden; }
 button { background: #241c33; color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 5px 9px; font: inherit; cursor: pointer; }
 button:hover { border-color: var(--accent2); }
 button.primary { background: var(--accent); color: #000; font-weight: 700; border-color: var(--accent); }
@@ -18,13 +19,13 @@ button.danger { color: var(--danger); }
 input, select { background: #0f0b16; color: var(--text); border: 1px solid var(--line); border-radius: 4px; padding: 3px 5px; font: inherit; }
 input[type="checkbox"] { accent-color: var(--accent); }
 
-#toolbar { height: 46px; display: flex; align-items: center; gap: 8px; padding: 0 10px; border-bottom: 1px solid var(--line); background: var(--panel); white-space: nowrap; overflow-x: auto; }
+#toolbar { flex: none; min-height: 46px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; padding: 6px 10px; border-bottom: 1px solid var(--line); background: var(--panel); white-space: nowrap; }
 #toolbar .brand { font-weight: 800; color: var(--accent); margin-right: 6px; }
 #toolbar label { display: inline-flex; align-items: center; gap: 3px; color: var(--muted); }
 #toolbar .sp { flex: 1; }
 #timeInfo { font-variant-numeric: tabular-nums; color: var(--accent); min-width: 80px; }
 
-#main { display: flex; height: calc(100% - 46px); }
+#main { display: flex; flex: 1; min-height: 0; }
 #stageWrap { flex: 1; display: flex; align-items: center; justify-content: center; background: #050308; min-width: 0; padding: 10px; }
 #stage { background: #000; display: block; box-shadow: 0 0 0 1px #333; touch-action: none; }
 #panel { width: 340px; flex: none; overflow-y: auto; background: var(--panel); border-left: 1px solid var(--line); padding: 0 12px 30px; }
@@ -56,10 +57,20 @@ label.f .val { min-width: 30px; text-align: right; color: var(--muted); }
 
 /* ---- ショーモード ---- */
 body.show #toolbar, body.show #panel { display: none; }
-body.show #main { height: 100%; }
 body.show #stageWrap { padding: 0; background: #000; }
 body.show #stage { box-shadow: none; }
 body.hidecursor, body.hidecursor * { cursor: none !important; }
 #showHint { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); background: rgba(0,0,0,.75); color: #fff; padding: 8px 14px; border-radius: 8px; font-size: 13px; opacity: 0; pointer-events: none; transition: opacity .3s; display: none; }
 body.show #showHint { display: block; }
 #showHint.on { opacity: 1; }
+
+/* ---- 全画面編集 / UI 非表示 ---- */
+body.uihidden #toolbar, body.uihidden #panel { display: none; }
+body.uihidden #stageWrap { padding: 0; background: #000; }
+body.fs:not(.show) #stageWrap { position: fixed; inset: 0; padding: 0; background: #000; }
+body.fs:not(.show) #stage { box-shadow: none; }
+body.fs:not(.show) #toolbar { position: fixed; top: 0; left: 0; right: 340px; z-index: 10; background: rgba(23, 18, 31, 0.9); }
+body.fs:not(.show) #panel { position: fixed; top: 0; right: 0; bottom: 0; z-index: 10; background: rgba(23, 18, 31, 0.9); }
+#editHint { position: fixed; left: 50%; top: 16px; transform: translateX(-50%); background: rgba(0,0,0,.75); color: #fff; padding: 8px 14px; border-radius: 8px; font-size: 13px; opacity: 0; pointer-events: none; transition: opacity .3s; z-index: 20; }
+#editHint.on { opacity: 1; }
+body.show #editHint { display: none; }

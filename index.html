@@ -24,6 +24,8 @@
     <button id="btnImport">読み込み</button>
     <input type="file" id="fileImport" accept=".json,application/json" hidden>
     <button id="btnNew" class="danger">初期化</button>
+    <button id="btnHideUI" title="Tab: 編集UIを隠して投影と同じ表示で編集">UIを隠す</button>
+    <button id="btnFs" title="Shift+F: 編集モードのまま全画面">⛶ 全画面</button>
     <button id="btnShowHere" title="選択中のシーンからショーを開始">このシーンから ▶</button>
     <button id="btnShow" class="primary">ショー開始 ⛶</button>
   </header>
@@ -77,6 +79,7 @@
           <li>ドラッグ: 移動 ／ 黄色ハンドル: サイズ変更（ホイールでも可）</li>
           <li>Delete: 削除 ／ Ctrl+D: 複製 ／ F: 反転 ／ 矢印: 微調整（Shift で10px）</li>
           <li>Space: プレビュー再生/停止 ／ Ctrl+Z: 元に戻す</li>
+          <li>Shift+F: 編集モードのまま全画面 ／ Tab: 編集UIの表示/非表示（投影と同じ表示で配置合わせ）</li>
           <li>ショー中: Esc/E 編集へ ／ ←→ シーン送り ／ Space 一時停止 ／ G 領域表示 ／ F 全画面 ／ M 消音</li>
           <li>編集内容はブラウザに自動保存されます。本番 PC へは「書き出し」した JSON を「読み込み」で移せます。</li>
         </ul>
@@ -84,6 +87,7 @@
     </aside>
   </div>
 
+  <div id="editHint">Tab: 編集UIを表示 ／ Shift+F: 全画面切替 ／ ドラッグで配置はそのまま可能</div>
   <div id="showHint">Esc / E: 編集に戻る　←→: シーン送り　Space: 一時停止　G: 領域表示　F: 全画面　M: 消音</div>
 
   <script src="js/util.js"></script>

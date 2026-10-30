@@ -100,7 +100,7 @@
   App.exitShow = function () {
     App.mode = 'edit';
     document.body.classList.remove('show', 'hidecursor');
-    if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {});
+    // 全画面のまま編集に戻る（投影面を見ながら配置を合わせられるように）
     App.stage.audible = false;
     App.rebuild();
     setTimeout(App.layout, 50);
@@ -201,8 +201,7 @@
     else if (k === ' ') App.show.paused = !App.show.paused;
     else if (k === 'g' || k === 'G') App.show.guides = !App.show.guides;
     else if (k === 'f' || k === 'F') {
-      if (document.fullscreenElement) document.exitFullscreen();
-      else document.documentElement.requestFullscreen().catch(() => {});
+      App.toggleFullscreen();
     } else if (k === 'm' || k === 'M') {
       App.project.settings.sound = !App.project.settings.sound;
       HW.audio.enabled = App.project.settings.sound;
@@ -212,7 +211,29 @@
   window.addEventListener('pointerdown', () => HW.audio.init());
   window.addEventListener('mousemove', () => App.mode === 'show' && showHint());
   window.addEventListener('resize', () => App.layout());
-  document.addEventListener('fullscreenchange', () => setTimeout(App.layout, 50));
+  document.addEventListener('fullscreenchange', () => {
+    document.body.classList.toggle('fs', !!document.fullscreenElement);
+    const b = document.getElementById('btnFs');
+    if (b) b.textContent = document.fullscreenElement ? '⛶ 全画面解除' : '⛶ 全画面';
+    setTimeout(App.layout, 50);
+  });
+
+  App.toggleFullscreen = function () {
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    else if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(() => {});
+  };
+
+  // 編集 UI（ツールバー・パネル）の表示切り替え。全画面編集で投影と同じ見え方にする
+  let uiHintTimer = 0;
+  App.toggleUI = function (show) {
+    const hide = show === undefined ? !document.body.classList.contains('uihidden') : !show;
+    document.body.classList.toggle('uihidden', hide);
+    const h = document.getElementById('editHint');
+    h.classList.toggle('on', hide);
+    clearTimeout(uiHintTimer);
+    if (hide) uiHintTimer = setTimeout(() => h.classList.remove('on'), 2500);
+    setTimeout(App.layout, 0);
+  };
 
   // ---------- 起動 ----------
   window.addEventListener('DOMContentLoaded', () => {

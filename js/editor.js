@@ -24,6 +24,8 @@
     $('btnPlay').onclick = togglePlay;
     $('btnReset').onclick = () => App.rebuild();
     $('btnShow').onclick = () => App.enterShow(false);
+    $('btnFs').onclick = () => App.toggleFullscreen();
+    $('btnHideUI').onclick = () => App.toggleUI(false);
     $('btnShowHere').onclick = () => App.enterShow(true);
     $('btnUndo').onclick = () => App.undo();
     $('btnExport').onclick = exportJSON;
@@ -309,6 +311,16 @@
     }
     if (k === ' ') {
       togglePlay();
+      ev.preventDefault();
+      return;
+    }
+    if (k === 'Tab') {
+      App.toggleUI();
+      ev.preventDefault();
+      return;
+    }
+    if ((k === 'f' || k === 'F') && ev.shiftKey) {
+      App.toggleFullscreen();
       ev.preventDefault();
       return;
     }
